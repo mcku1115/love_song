@@ -1,0 +1,107 @@
+---
+title: "love_song"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r message=FALSE}
+library(jiebaR)
+library(stringr)
+
+# Get txt file paths
+fps_1 <- list.files("love_song", full.names = T)
+fps_2 <- list.files("non_love_song", full.names = T)
+
+# Initialize jiebaR
+seg <- worker()
+
+# determining song names
+name_1 <- vector("character", length(fps_1))
+
+for (i in seq_along(fps_1)) {
+  name_1[i] <- str_extract(basename(fps_1[i]), '(?<=_).+(?=\\.)')
+}
+
+name_2 <- vector("character", length(fps_2))
+
+for (i in seq_along(fps_2)) {
+  name_2[i] <- str_extract(basename(fps_2[i]), '(?<=_).+(?=\\.)')
+}
+
+# determining lyrics
+lyric_1 <- vector("character", length(fps_1))
+
+for (i in seq_along(fps_1)) {
+  l_1 <- readLines(fps_1[i], encoding = "UTF-8") %>% str_squish()
+  segged_1 <- segment(l_1, seg)
+  lyric_1[i] <- paste(segged_1, collapse = " ")
+}
+
+lyric_2 <- vector("character", length(fps_2))
+
+for (i in seq_along(fps_2)) {
+  l_2 <- readLines(fps_2[i], encoding = "UTF-8") %>% str_squish()
+  segged_2 <- segment(l_2, seg)
+  lyric_2[i] <- paste(segged_2, collapse = " ")
+}
+
+# Combine results into dfs
+love_song_df <- tibble::tibble(編號 = seq_along(fps_1), 歌名 = name_1, 歌詞 = lyric_1)
+non_love_song_df <- tibble::tibble(編號 = seq_along(fps_2), 歌名 = name_2, 歌詞 = lyric_2)
+knitr::kable(love_song_df, align = "c")
+knitr::kable(non_love_song_df, align = "c")
+
+```
+
+```{r message=FALSE}
+library(tidytext)
+library(dplyr)
+
+tidy_love_song <- love_song_df %>%
+  unnest_tokens(output = '用詞', input = '歌詞', token = 'regex', pattern = ' ')
+freq_love_song <- tidy_love_song %>% 
+  group_by(用詞) %>% 
+  summarize(個數 = n()) %>% 
+  arrange(desc(個數)) %>%
+  print()
+
+tidy_non_love_song <- non_love_song_df %>%
+  unnest_tokens(output = '用詞', input = '歌詞', token = 'regex', pattern = ' ')
+freq_non_love_song <- tidy_non_love_song %>% 
+  group_by(用詞) %>%
+  summarize(個數 = n()) %>%
+  arrange(desc(個數)) %>%
+  print()
+```
+
+```{r message=FALSE}
+library(ggplot2)
+freq_love_song %>%
+  top_n(20, 個數) %>%
+  ggplot() +
+    geom_bar(aes(用詞, 個數), stat = "identity") +
+    coord_flip()
+
+freq_non_love_song %>%
+  top_n(20, 個數) %>%
+  ggplot() +
+    geom_bar(aes(用詞, 個數), stat = "identity") +
+    coord_flip()
+```
+
+```{r message=FALSE}
+library(quanteda)
+
+corpus_love_song <- corpus(love_song_df, docid_field = '編號', text_field = '歌詞')
+dfm_love_song <- dfm(corpus_love_song)
+textplot_wordcloud(dfm_love_song)
+corpus_non_love_song <- corpus(non_love_song_df, docid_field = '編號', text_field = '歌詞')
+dfm_non_love_song <- dfm(corpus_love_song)
+textplot_wordcloud(dfm_non_love_song)
+
+```
+
