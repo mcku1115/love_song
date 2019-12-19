@@ -63,18 +63,22 @@ library(dplyr)
 
 tidy_love_song <- love_song_df %>%
   unnest_tokens(output = '用詞', input = '歌詞', token = 'regex', pattern = ' ')
+  
 freq_love_song <- tidy_love_song %>% 
   group_by(用詞) %>% 
-  summarize(個數 = n()) %>% 
+  summarize(個數 = n()) %>%
   arrange(desc(個數)) %>%
+  filter(!(用詞 %in% c('我', '你', '妳', '他', '她', '的', '在', '了'))) %>%
   print()
 
 tidy_non_love_song <- non_love_song_df %>%
   unnest_tokens(output = '用詞', input = '歌詞', token = 'regex', pattern = ' ')
+
 freq_non_love_song <- tidy_non_love_song %>% 
   group_by(用詞) %>%
   summarize(個數 = n()) %>%
   arrange(desc(個數)) %>%
+  filter(!(用詞 %in% c('我', '你', '妳', '他', '她', '的', '在', '了'))) %>%
   print()
 ```
 
@@ -94,14 +98,14 @@ freq_non_love_song %>%
 ```
 
 ```{r message=FALSE}
-library(quanteda)
+library(wordcloud2)
+wordcloud2(freq_love_song, size = 0.5, shape = 'star')
 
-corpus_love_song <- corpus(love_song_df, docid_field = '編號', text_field = '歌詞')
-dfm_love_song <- dfm(corpus_love_song)
-textplot_wordcloud(dfm_love_song)
-corpus_non_love_song <- corpus(non_love_song_df, docid_field = '編號', text_field = '歌詞')
-dfm_non_love_song <- dfm(corpus_love_song)
-textplot_wordcloud(dfm_non_love_song)
+
+```
+
+```{r message=FALSE}
+wordcloud2(freq_non_love_song, size = 0.5, shape = 'star')
 
 ```
 
