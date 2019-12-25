@@ -13,8 +13,8 @@ library(jiebaR)
 library(stringr)
 
 # Get txt file paths
-fps_m <- list.files("male", full.names = T)
-fps_f <- list.files("female", full.names = T)
+fps_m <- list.files('male', full.names = T)
+fps_f <- list.files('female', full.names = T)
 
 # Initialize jiebaR
 seg <- worker()
@@ -36,9 +36,9 @@ for (i in seq_along(fps_f)) {
 lyric_m <- vector('character', length(fps_m))
 
 for (i in seq_along(fps_m)) {
-  l_m <- readLines(fps_m[i], encoding = "UTF-8") %>% str_squish()
+  l_m <- readLines(fps_m[i], encoding = 'UTF-8') %>% str_squish()
   segged_m <- segment(l_m, seg)
-  lyric_m[i] <- paste0(segged_m, collapse = " ")
+  lyric_m[i] <- paste0(segged_m, collapse = ' ')
 }
 
 lyric_f <- vector('character', length(fps_f))
@@ -46,7 +46,7 @@ lyric_f <- vector('character', length(fps_f))
 for (i in seq_along(fps_f)) {
   l_f <- readLines(fps_f[i], encoding = 'UTF-8') %>% str_squish()
   segged_f <- segment(l_f, seg)
-  lyric_f[i] <- paste0(segged_f, collapse = " ")
+  lyric_f[i] <- paste0(segged_f, collapse = ' ')
 }
 
 # Combine results into dfs
@@ -111,7 +111,7 @@ library("htmlwidgets")
 wordcloud_m <- wordcloud2(freq_male, shape = 'star')
 
 saveWidget(wordcloud_m, 'male.html', selfcontained = F)
-webshot('male.html', 'male.png', delay =5)
+webshot('male.html', 'male.png', delay = 5)
 
 ```
 
@@ -121,7 +121,7 @@ webshot('male.html', 'male.png', delay =5)
 wordcloud_f <- wordcloud2(freq_female, shape = 'star')
 
 saveWidget(wordcloud_f, 'female.html', selfcontained = F)
-webshot('female.html', 'female.png', delay =5)
+webshot('female.html', 'female.png', delay = 5)
 
 ```
 
