@@ -62,11 +62,12 @@ library(tidytext)
 library(dplyr)
 library(readxl)
 
-stop_words <- read_excel("stop_words.xlsx")
+stopwords <- read_excel("stop_words_CH.xlsx")
 
 tidy_male <- male_df %>%
   unnest_tokens(output = '用詞', input = '歌詞', token = 'regex', pattern = ' ') %>%
-  anti_join(stop_words, by = c('用詞' = 'stop_words'))
+  anti_join(get_stopwords(), by = c('用詞' = 'word')) %>%
+  anti_join(stopwords, by = c('用詞' = '停用詞'))
   
 freq_male <- tidy_male %>% 
   group_by(用詞) %>% 
@@ -76,7 +77,8 @@ freq_male <- tidy_male %>%
 
 tidy_female <- female_df %>%
   unnest_tokens(output = '用詞', input = '歌詞', token = 'regex', pattern = ' ') %>%
-  anti_join(stop_words, by = c('用詞' = 'stop_words'))
+  anti_join(get_stopwords(), by = c('用詞' = 'word')) %>%
+  anti_join(stopwords, by = c('用詞' = '停用詞'))
 
 freq_female <- tidy_female %>% 
   group_by(用詞) %>%
@@ -131,7 +133,8 @@ library(ggplot2)
 
 tidy_both <- rbind(male_df, female_df) %>%
   unnest_tokens(output = '用詞', input = '歌詞', token = 'regex', pattern = ' ') %>%
-  anti_join(stop_words, by = c('用詞' = 'stop_words'))
+  anti_join(get_stopwords(), by = c('用詞' = 'word')) %>%
+  anti_join(stopwords, by = c('用詞' = '停用詞'))
 
 dfm_both <- tidy_both %>% 
   count(歌名, 用詞, sort = TRUE) %>%
