@@ -62,7 +62,7 @@ library(tidytext)
 library(dplyr)
 library(readxl)
 
-stopwords <- read_excel("stop_words_CH.xlsx")
+stopwords <- read_excel("ch_stop_words.xlsx")
 
 tidy_male <- male_df %>%
   unnest_tokens(output = '用詞', input = '歌詞', token = 'regex', pattern = ' ') %>%
