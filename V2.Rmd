@@ -1,5 +1,5 @@
 ---
-title: "love_song"
+title: "songs"
 output: html_document
 ---
 
@@ -36,9 +36,7 @@ for (i in seq_along(fps_f)) {
 lyric_m <- vector('character', length(fps_m))
 
 for (i in seq_along(fps_m)) {
-  l_m <- try(readLines(fps_m[i], encoding = 'UTF-8')) 
-  if ('try-error' %in% class(l_m)) {break} 
-  else readLines(fps_m[i], encoding = 'UTF-8') %>% str_squish()
+  l_m <- readLines(fps_m[i], encoding = 'UTF-8') %>% str_squish()
   segged_m <- segment(l_m, seg)
   lyric_m[i] <- paste0(segged_m, collapse = ' ')
 }
@@ -46,9 +44,7 @@ for (i in seq_along(fps_m)) {
 lyric_f <- vector('character', length(fps_f))
 
 for (i in seq_along(fps_f)) {
-  l_f <- try(readLines(fps_f[i], encoding = 'UTF-8')) 
-  if ('try-error' %in% class(l_f)) {break} 
-  else readLines(fps_f[i], encoding = 'UTF-8') %>% str_squish()
+  l_f <- readLines(fps_f[i], encoding = 'UTF-8') %>% str_squish()
   segged_f <- segment(l_f, seg)
   lyric_f[i] <- paste0(segged_f, collapse = ' ')
 }
@@ -95,13 +91,15 @@ freq_male %>%
   top_n(20, 個數) %>%
   ggplot() +
     geom_bar(aes(用詞, 個數), stat = 'identity') +
-    coord_flip()
+    coord_flip() +
+    labs(title = '男歌手高頻用詞')
 
 freq_female %>%
   top_n(20, 個數) %>%
   ggplot() +
     geom_bar(aes(用詞, 個數), stat = 'identity') +
-    coord_flip()
+    coord_flip() +
+    labs(title = '女歌手高頻用詞')
 ```
 
 ```{r message=FALSE, warning=FALSE}
@@ -120,7 +118,7 @@ webshot('male.html', 'male.png', delay = 5)
 
 
 ```{r message=FALSE}
-wordcloud_f <- wordcloud2(freq_female, size = 2, shape = 'star')
+wordcloud_f <- wordcloud2(freq_female, shape = 'star')
 
 saveWidget(wordcloud_f, 'female.html', selfcontained = F)
 webshot('female.html', 'female.png', delay = 5)
@@ -150,15 +148,15 @@ dfm_female <- tidy_female %>%
   count(歌名, 用詞, sort = TRUE) %>%
   cast_dfm(歌名, 用詞, n)
 
-topic_model_both <- stm(dfm_both, K = 4, verbose = FALSE, init.type = "Spectral")
-topic_model_male <- stm(dfm_male, K = 2, verbose = FALSE, init.type = "Spectral")
-topic_model_female <- stm(dfm_female, K = 2, verbose = FALSE, init.type = "Spectral")
+topic_model_both <- stm(dfm_both, K = 6, verbose = FALSE, init.type = "Spectral")
+topic_model_male <- stm(dfm_male, K = 6, verbose = FALSE, init.type = "Spectral")
+topic_model_female <- stm(dfm_female, K = 6, verbose = FALSE, init.type = "Spectral")
 
 td_beta_both <- tidy(topic_model_both)
 
 td_beta_both %>%
     group_by(topic) %>%
-    top_n(5, beta) %>%
+    top_n(10, beta) %>%
     ungroup() %>%
     mutate(topic = paste0('主題 ', topic),
            term = reorder_within(term, beta, topic)) %>%
@@ -178,7 +176,7 @@ td_beta_male <- tidy(topic_model_male)
 
 td_beta_male %>%
     group_by(topic) %>%
-    top_n(5, beta) %>%
+    top_n(10, beta) %>%
     ungroup() %>%
     mutate(topic = paste0('主題 ', topic),
            term = reorder_within(term, beta, topic)) %>%
@@ -195,7 +193,7 @@ td_beta_female <- tidy(topic_model_female)
 
 td_beta_female %>%
     group_by(topic) %>%
-    top_n(5, beta) %>%
+    top_n(10, beta) %>%
     ungroup() %>%
     mutate(topic = paste0('主題 ', topic),
            term = reorder_within(term, beta, topic)) %>%
