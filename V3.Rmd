@@ -8,7 +8,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, error=FALSE}
 library(jiebaR)
 library(stringr)
 
@@ -55,18 +55,17 @@ female_df <- tibble::tibble(編號 = seq_along(fps_f), 性別 = '女', 歌名 = 
 
 ```
 
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE}
 library(tidytext)
 library(dplyr)
 library(readxl)
-library(readr)
 
 stopwords <- read_excel('ch_stop_words.xlsx')
-stop_words <- read_csv("stop_words.txt", col_names = FALSE)
 
 tidy_male <- male_df %>%
   unnest_tokens(output = '用詞', input = '歌詞', token = 'regex', pattern = ' ') %>%
-  anti_join(stop_words, by = c('用詞' = 'X1'))
+  anti_join(get_stopwords(), by = c('用詞' = 'word')) %>%
+  anti_join(stopwords, by = c('用詞' = '停用詞'))
   
 freq_male <- tidy_male %>% 
   group_by(用詞) %>% 
@@ -76,7 +75,8 @@ freq_male <- tidy_male %>%
 
 tidy_female <- female_df %>%
   unnest_tokens(output = '用詞', input = '歌詞', token = 'regex', pattern = ' ') %>%
-  anti_join(stop_words, by = c('用詞' = 'X1'))
+  anti_join(get_stopwords(), by = c('用詞' = 'word')) %>%
+  anti_join(stopwords, by = c('用詞' = '停用詞'))
 
 freq_female <- tidy_female %>% 
   group_by(用詞) %>%
@@ -87,44 +87,19 @@ freq_female <- tidy_female %>%
 
 ```{r message=FALSE}
 library(ggplot2)
-freq_male %>%
+
+freq_male %>% 
   top_n(20, 個數) %>%
   ggplot() +
     geom_bar(aes(reorder(用詞, +個數), 個數), stat = 'identity') +
     coord_flip() +
     labs(title = '男歌手高頻用詞')
 
-freq_female %>%
+freq_female %>% 
   top_n(20, 個數) %>%
   ggplot() +
     geom_bar(aes(reorder(用詞, +個數), 個數), stat = 'identity') +
     coord_flip() +
     labs(title = '女歌手高頻用詞')
 ```
-
-```{r message=FALSE, warning=FALSE}
-library(wordcloud2)
-library(webshot)
-webshot::install_phantomjs()
-library("htmlwidgets")
-
-wordcloud_m <- wordcloud2(freq_male, shape = 'star')
-
-saveWidget(wordcloud_m, 'male.html', selfcontained = F)
-webshot('male.html', 'male.png', delay = 5)
-
-```
-
-
-
-```{r message=FALSE}
-wordcloud_f <- wordcloud2(freq_female, shape = 'star')
-
-saveWidget(wordcloud_f, 'female.html', selfcontained = F)
-webshot('female.html', 'female.png', delay = 5)
-
-```
-
-
-
 
