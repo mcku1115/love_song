@@ -1,0 +1,86 @@
+---
+title: "songs"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r message=FALSE, warning=FALSE, error=FALSE}
+library(jiebaR)
+library(stringr)
+
+# Get txt file paths
+fps_m <- list.files('male', full.names = T)
+fps_f <- list.files('female', full.names = T)
+
+# Initialize jiebaR
+seg <- worker()
+
+
+# determining lyrics
+lyric_m <- vector('character', length(fps_m))
+
+for (i in seq_along(fps_m)) {
+  l_m <- readLines(fps_m[i], encoding = 'UTF-8') %>% str_squish()
+  segged_m <- segment(l_m, seg)
+  lyric_m[i] <- paste0(segged_m, collapse = ' ')
+}
+
+lyric_f <- vector('character', length(fps_f))
+
+for (i in seq_along(fps_f)) {
+  l_f <- readLines(fps_f[i], encoding = 'UTF-8') %>% str_squish()
+  segged_f <- segment(l_f, seg)
+  lyric_f[i] <- paste0(segged_f, collapse = ' ')
+}
+
+# Combine results into dfs
+male_df <- tibble::tibble(性別 = '男', 歌詞 = lyric_m)
+female_df <- tibble::tibble(性別 = '女', 歌詞 = lyric_f)
+
+```
+
+
+
+```{r message=FALSE, warning=FALSE}
+library(quanteda)
+library(caret)
+library(dplyr)
+
+both_df <- rbind(male_df, female_df) %>% mutate(編號 = 1:(nrow(male_df)+nrow(female_df)))
+songs_corpus <- corpus(both_df, text_field = '歌詞')
+
+set.seed(500)
+train_id <- sample(1:nrow(both_df), 20000, replace = FALSE)
+head(train_id, 10)
+
+# get training set
+
+songs_train_df <- filter(both_df, 編號 %in% train_id)
+songs_train_dtm <- corpus(songs_train_df, text_field = '歌詞') %>%
+  dfm(remove = stopwords(), stem = T)
+
+# get test set (documents not in id_train)
+songs_test_df <- filter(both_df, !編號 %in% train_id)
+songs_test_dtm <- corpus(songs_test_df, text_field = '歌詞') %>%
+  dfm(remove = stopwords(), stem = T)
+
+# train cassifier model
+var <- songs_train_df$性別
+var <- as.factor(var)
+tmod_song <- textmodel_nb(songs_train_dtm, var)
+
+# inspect performance
+songs_matched <- dfm_match(songs_test, features = featnames(songs_training))
+
+actual_class <- songs_test_df$性別
+predicted_class <- predict(tmod_song, newdata = songs_matched)
+tab_class <- table(actual_class, predicted_class)
+tab_class
+
+confusionMatrix(tab_class, mode = 'everything')
+```
+
